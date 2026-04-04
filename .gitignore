@@ -1,5 +1,6 @@
 node_modules/
 .env
+add-user.js
 .vercel/
 
 .vercel
