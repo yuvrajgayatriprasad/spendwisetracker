@@ -4,8 +4,8 @@
   "description": "SpendWise - Smart Financial Management",
   "private": true,
   "scripts": {
-    "dev": "echo Use: vercel dev",
-    "start": "echo Use: vercel dev"
+    "dev": "echo Starting SpendWise dev server...",
+    "start": "echo Starting SpendWise dev server..."
   },
   "dependencies": {
     "mongodb": "^6.12.0",

@@ -432,7 +432,12 @@ function renderTransactions(containerId, txs) {
     txs.forEach(tx => {
         if (tx.date !== lastDate) { html += `<div class="date-divider">${tx.date}</div>`; lastDate = tx.date; }
         const isPos = tx.amount > 0;
-        html += `<li class="transaction-item"><div class="transaction-icon ${tx.catClass}"><span class="material-icons-outlined">${tx.icon}</span></div><div class="transaction-info"><div class="name">${tx.name}</div><div class="category">${tx.cat} • ${tx.time}</div></div><div class="transaction-meta"><div class="amount ${isPos?'positive':'negative'}">${isPos?'+':''}${fmt(tx.amount)}</div><div class="method">${tx.method}</div></div></li>`;
+        const typeBadge = tx.txType === 'deposit'
+            ? `<span style="font-size:10px;font-weight:700;letter-spacing:.5px;color:#10b981;background:rgba(16,185,129,.12);padding:2px 7px;border-radius:20px">DEPOSIT</span>`
+            : tx.txType === 'withdrawal'
+            ? `<span style="font-size:10px;font-weight:700;letter-spacing:.5px;color:#ef4444;background:rgba(239,68,68,.12);padding:2px 7px;border-radius:20px">WITHDRAWAL</span>`
+            : '';
+        html += `<li class="transaction-item"><div class="transaction-icon ${tx.catClass}"><span class="material-icons-outlined">${tx.icon}</span></div><div class="transaction-info"><div class="name">${tx.name}</div><div class="category">${typeBadge} ${tx.cat} • ${tx.time}</div></div><div class="transaction-meta"><div class="amount" style="color:${isPos?'#10b981':'#ef4444'};font-weight:700">${isPos?'+':''}${fmt(tx.amount)}</div><div class="method">${tx.method}</div></div></li>`;
     });
     el.innerHTML = html;
 }
@@ -786,7 +791,7 @@ async function extractTextFromPdf(file) {
 }
 
 function parseTransactionsFromText(text) {
-    const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 5);
+    const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 2);
     const results = [];
     const datePats = [
         /\b(\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4})\b/,
@@ -794,36 +799,94 @@ function parseTransactionsFromText(text) {
         /\b(\d{1,2}\s+(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.?\s*\d{2,4})\b/i,
         /\b((?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.?\s+\d{1,2},?\s+\d{2,4})\b/i,
     ];
-    const skipPat = /^(date|description|merchant|amount|balance|debit|credit|transaction|account|statement|opening|closing|total)/i;
+    const skipPat = /^(date|description|merchant|amount|balance|debit|credit|transaction|account|statement|opening|closing|total|particulars|narration|chq|ref\.?\s*no|value\s*dt|sr\.?\s*no|sl\.?\s*no|withdrawl|withdrawal|deposit|cheque)/i;
+    const amountPat = /([(\u2212\-]?[\u20B9$]?\s*\d{1,6}(?:,\d{3})*\.\d{2}[)]?)/g;
+    function getDateResult(line) {
+        for (const pat of datePats) { const m = line.match(pat); if (m) return { str: m[1], match: m }; }
+        return null;
+    }
+    function hasDate(line) { return !!getDateResult(line); }
 
-    for (const line of lines) {
+    for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
         if (skipPat.test(line)) continue;
-        let dateStr = null, dateMatch = null;
-        for (const pat of datePats) {
-            const m = line.match(pat);
-            if (m) { dateStr = m[1]; dateMatch = m; break; }
-        }
-        if (!dateStr) continue;
 
-        const amountMatches = [...line.matchAll(/([(\-]?\$?\s*\d{1,6}(?:,\d{3})*\.\d{2}[)]?)/g)];
+        const dateResult = getDateResult(line);
+        if (!dateResult) continue;
+
+        const amountMatches = [...line.matchAll(amountPat)];
         if (!amountMatches.length) continue;
 
-        const rawAmt = (amountMatches.length >= 2 ? amountMatches[amountMatches.length - 2] : amountMatches[amountMatches.length - 1])[1].trim();
-        const isNeg = rawAmt.startsWith('(') || rawAmt.startsWith('-');
-        const absVal = parseFloat(rawAmt.replace(/[$,\s()]/g, ''));
+        // Second-to-last amount = debit/credit; last = running balance
+        const rawAmt = (amountMatches.length >= 2
+            ? amountMatches[amountMatches.length - 2]
+            : amountMatches[amountMatches.length - 1])[1].trim();
+        const isNeg = rawAmt.startsWith('(') || rawAmt.startsWith('-') || rawAmt.startsWith('\u2212');
+        const absVal = parseFloat(rawAmt.replace(/[\u20B9$,\s()\u2212\-]/g, ''));
         if (isNaN(absVal) || absVal === 0) continue;
         const amount = isNeg ? -absVal : absVal;
 
-        let desc = line;
-        if (dateMatch) desc = desc.replace(dateMatch[0], '');
-        amountMatches.forEach(m => { desc = desc.replace(m[0], ''); });
-        desc = desc.replace(/\s+/g, ' ').replace(/[|*#_]/g, '').trim();
-        desc = desc.replace(/^(debit|credit|purchase|payment|pos|atm|ach)\s*/i, '').trim();
+        // --- Detect transaction type & extract clean name from UPI/NEFT ref ---
+        let rawDesc = line.replace(dateResult.match[0], '');
+        amountMatches.forEach(m => { rawDesc = rawDesc.replace(m[0], ''); });
+        // Strip trailing balance indicator like "Cr" or "Dr" only when preceded by whitespace
+        rawDesc = rawDesc.replace(/\s+(Cr|Dr)\.?\s*$/i, '').replace(/\s+/g, ' ').trim();
+
+        let txType = 'withdrawal'; // default
+        let desc = rawDesc;
+
+        // UPI format: UPIXX/REFNUM/DR/NAME/BANK/... or /CR/NAME/...
+        const upiMatch = rawDesc.match(/\/(?:DR|CR)\/([^\/\s@][^\/]*?)(?:\/|\s*$)/i);
+        const typeMatch = rawDesc.match(/\/(DR|CR)\//i);
+        if (typeMatch) {
+            txType = typeMatch[1].toUpperCase() === 'CR' ? 'deposit' : 'withdrawal';
+        }
+        if (upiMatch) {
+            // Clean name: remove underscores, trailing numbers, email-like strings
+            desc = upiMatch[1].replace(/[_]/g, ' ').replace(/\d{6,}/g, '').replace(/[@\.][\w\.]+/g, '').trim();
+        } else {
+            // Non-UPI: general cleanup (don't strip /DR/ /CR/ since already extracted)
+            desc = rawDesc
+                .replace(/\b\d{8,}\b/g, '')   // long ref numbers
+                .replace(/[|*#_]/g, '')
+                .replace(/\s+/g, ' ')
+                .trim();
+            desc = desc.replace(/^(debit|credit|purchase|payment|pos|atm|ach|upi|neft|imps|rtgs)\s*/i, '').trim();
+        }
+
+        // If desc still short, look AHEAD up to 3 lines for particulars
+        if (desc.length < 3) {
+            for (let j = i + 1; j <= Math.min(i + 3, lines.length - 1); j++) {
+                const next = lines[j].trim();
+                if (!next || skipPat.test(next) || hasDate(next)) break;
+                const nextAmts = [...next.matchAll(amountPat)];
+                const nextNoAmt = next.replace(amountPat, '').replace(/\s/g, '');
+                if (nextAmts.length && nextNoAmt.length < 4) continue;
+                // Try UPI extraction on next line too
+                const nextUpi = next.match(/\/(?:DR|CR)\/([^\/\s@][^\/]*?)(?:\/|\s*$)/i);
+                if (nextUpi) { desc = nextUpi[1].replace(/[_]/g, ' ').replace(/\d{6,}/g, '').replace(/[@\.][\w\.]+/g, '').trim(); break; }
+                const candidate = next.replace(amountPat, '').replace(/\b\d{8,}\b/g, '').replace(/[|*#_]/g, '').replace(/\s+/g, ' ').trim();
+                if (candidate.length >= 2) { desc = candidate; break; }
+            }
+        }
+
+        // Still empty — look BEHIND
+        if (desc.length < 3 && i > 0) {
+            const prev = lines[i - 1].trim();
+            if (prev && !skipPat.test(prev) && !hasDate(prev)) {
+                const prevAmts = [...prev.matchAll(amountPat)];
+                if (!prevAmts.length) desc = prev.replace(/[|*#_]/g, '').replace(/\s+/g, ' ').trim();
+            }
+        }
+
         if (!desc || desc.length < 2) desc = 'Bank Transaction';
+
+        // Set correct sign: deposit = positive income, withdrawal = negative expense
+        const finalAmount = txType === 'deposit' ? absVal : -absVal;
 
         const cat = autoCategorize(desc);
         const meta = getCatMeta(cat);
-        results.push({ name: desc.slice(0, 100), date: formatImportDate(dateStr), amount, cat, catClass: meta.catClass, icon: meta.icon, time: 'Imported', method: 'Bank Import' });
+        results.push({ name: desc.slice(0, 80), date: formatImportDate(dateResult.str), amount: finalAmount, txType, cat, catClass: meta.catClass, icon: meta.icon, time: 'Imported', method: 'Bank Import' });
     }
 
     const seen = new Set();
@@ -881,7 +944,10 @@ function renderReviewTable(parsed) {
         <tr id="rr${i}">
             <td><input class="review-input" type="text" value="${escHtml(tx.date)}" placeholder="Date"></td>
             <td><input class="review-input desc-inp" type="text" value="${escHtml(tx.name)}" placeholder="Description"></td>
-            <td><input class="review-input amt-inp" type="number" step="0.01" value="${tx.amount.toFixed(2)}"></td>
+            <td style="text-align:center">
+                <div style="font-size:10px;font-weight:700;letter-spacing:.5px;margin-bottom:3px;color:${tx.txType==='deposit'?'#10b981':'#ef4444'};background:${tx.txType==='deposit'?'rgba(16,185,129,.12)':'rgba(239,68,68,.12)'};padding:2px 6px;border-radius:20px;display:inline-block">${tx.txType==='deposit'?'DEPOSIT':'WITHDRAWAL'}</div>
+                <input class="review-input amt-inp" type="number" step="0.01" value="${tx.amount.toFixed(2)}" style="color:${tx.txType==='deposit'?'#10b981':'#ef4444'};font-weight:700">
+            </td>
             <td><select class="review-select">${cats.map(c=>`<option value="${c}"${c===tx.cat?' selected':''}>${c}</option>`).join('')}</select></td>
             <td><input class="review-input" type="text" value="${escHtml(tx.method)}"></td>
             <td><button class="row-del-btn" onclick="removeReviewRow(this)" title="Remove"><span class="material-icons-outlined" style="font-size:16px">delete_outline</span></button></td>

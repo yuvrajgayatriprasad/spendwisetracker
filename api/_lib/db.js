@@ -13,7 +13,7 @@ async function connectToDatabase() {
     await client.connect();
 
     cachedClient = client;
-    cachedDb = client.db('login');
+    cachedDb = client.db('logininfo');
 
     // Create indexes on first connection
     const otps = cachedDb.collection('otps');

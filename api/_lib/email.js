@@ -48,14 +48,29 @@ async function sendOtpEmail(email, code, type = 'signup') {
     </body>
     </html>`;
 
-    const fromEmail = process.env.RESEND_FROM_EMAIL || 'SpendWise <onboarding@resend.dev>';
+    const fromEmail = process.env.RESEND_FROM_EMAIL;
+    if (!fromEmail || fromEmail.includes('YOURDOMAIN.COM')) {
+        throw new Error(
+            'RESEND_FROM_EMAIL is not configured. ' +
+            'Set it in .env to your Resend-verified domain, e.g.: SpendWise <noreply@login.yourdomain.com>'
+        );
+    }
+    console.log('[email] Sending OTP to:', email, '| from:', fromEmail);
 
-    await resend.emails.send({
+    const result = await resend.emails.send({
         from: fromEmail,
         to: email,
         subject,
         html,
     });
+
+    // Resend returns { data, error } — it does NOT throw on failure
+    if (result.error) {
+        console.error('Resend API error:', JSON.stringify(result.error));
+        throw new Error(`Email delivery failed: ${result.error.message || JSON.stringify(result.error)}`);
+    }
+
+    console.log('Email sent successfully, id:', result.data?.id);
 }
 
 module.exports = { sendOtpEmail };
