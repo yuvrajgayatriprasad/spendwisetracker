@@ -9,13 +9,17 @@ let authFlowType = 'signup'; // 'signup' or 'reset'
 let resetToken = ''; // temporary token for password reset
 
 // ========== API HELPER ==========
+
+// 🔧 Replace this with your actual Render URL after deploying the backend
+const API_BASE = 'https://YOUR-APP-NAME.onrender.com';
+
 async function api(endpoint, body, method) {
     method = method || (body ? 'POST' : 'GET');
     const token = getToken();
     const opts = { method, headers: { 'Content-Type': 'application/json' } };
     if (token) opts.headers['Authorization'] = 'Bearer ' + token;
     if (body) opts.body = JSON.stringify(body);
-    const res = await fetch('/api/' + endpoint, opts);
+    const res = await fetch(API_BASE + '/api/' + endpoint, opts);
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Something went wrong');
     return data;
@@ -82,7 +86,7 @@ function navigate(page) {
 }
 
 function render() {
-    const page = window.location.hash.slice(1) || 'login';
+    const page = window.location.hash.slice(1) || 'home';
     currentPage = page;
     // Auth guard: redirect to login if not authenticated on protected pages
     const protectedPages = ['dashboard','analytics','transactions','budgets','savings','settings'];
@@ -90,11 +94,11 @@ function render() {
         navigate('login'); return;
     }
     // Redirect to dashboard if already logged in and visiting auth pages
-    const authPages = ['login','signup'];
+    const authPages = ['login','signup','home'];
     if (authPages.includes(page) && isLoggedIn()) {
         navigate('dashboard'); return;
     }
-    const pages = { login: loginPage, signup: signupPage, forgot: forgotPage, otp: otpPage, resetpw: resetPasswordPage, dashboard: dashboardPage, analytics: analyticsPage, transactions: transactionsPage, budgets: budgetsPage, savings: savingsPage, settings: settingsPage };
+    const pages = { home: homePage, login: loginPage, signup: signupPage, forgot: forgotPage, otp: otpPage, resetpw: resetPasswordPage, dashboard: dashboardPage, analytics: analyticsPage, transactions: transactionsPage, budgets: budgetsPage, savings: savingsPage, settings: settingsPage };
     app.innerHTML = (pages[page] || loginPage)();
     initPageLogic(page);
     window.scrollTo(0, 0);
@@ -142,6 +146,162 @@ function sidebar(active) {
 
 function dashLayout(active, content) {
     return `<div class="dashboard-layout">${sidebar(active)}<main class="main-content">${content}</main></div>`;
+}
+
+// ========== LANDING PAGE ==========
+
+function landingIllustration() {
+    return `<svg viewBox="0 0 460 380" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:500px;filter:drop-shadow(0 20px 60px rgba(34,197,94,0.12))">
+  <ellipse cx="230" cy="355" rx="200" ry="28" fill="rgba(34,197,94,0.06)"/>
+  <circle cx="75" cy="75" r="80" fill="rgba(34,197,94,0.03)" stroke="rgba(34,197,94,0.07)" stroke-width="1"/>
+  <circle cx="395" cy="305" r="55" fill="rgba(59,130,246,0.03)" stroke="rgba(59,130,246,0.07)" stroke-width="1"/>
+  <!-- Phone frame -->
+  <rect x="158" y="12" width="172" height="328" rx="24" fill="#141622" stroke="rgba(255,255,255,0.09)" stroke-width="1.5"/>
+  <rect x="167" y="26" width="154" height="300" rx="15" fill="#0c0e1a"/>
+  <rect x="206" y="16" width="76" height="13" rx="6.5" fill="#0c0e1a"/>
+  <!-- Screen: top bar -->
+  <rect x="177" y="35" width="78" height="6" rx="3" fill="rgba(255,255,255,0.13)"/>
+  <rect x="290" y="35" width="23" height="6" rx="3" fill="#22c55e" opacity="0.85"/>
+  <!-- Balance card -->
+  <rect x="177" y="50" width="134" height="68" rx="13" fill="rgba(34,197,94,0.13)" stroke="rgba(34,197,94,0.2)" stroke-width="1"/>
+  <rect x="187" y="61" width="58" height="5" rx="2.5" fill="rgba(255,255,255,0.36)"/>
+  <rect x="187" y="74" width="88" height="11" rx="4" fill="rgba(255,255,255,0.9)"/>
+  <rect x="187" y="94" width="13" height="5" rx="2" fill="#22c55e" opacity="0.75"/>
+  <rect x="204" y="94" width="50" height="5" rx="2" fill="#22c55e" opacity="0.5"/>
+  <!-- Chart card -->
+  <rect x="177" y="128" width="134" height="98" rx="13" fill="rgba(255,255,255,0.02)" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+  <rect x="187" y="138" width="52" height="5" rx="2.5" fill="rgba(255,255,255,0.25)"/>
+  <line x1="182" y1="216" x2="305" y2="216" stroke="rgba(255,255,255,0.04)" stroke-width="1"/>
+  <rect x="187" y="178" width="12" height="38" rx="4" fill="rgba(34,197,94,0.28)"/>
+  <rect x="204" y="168" width="12" height="48" rx="4" fill="rgba(34,197,94,0.38)"/>
+  <rect x="221" y="158" width="12" height="58" rx="4" fill="#22c55e"/>
+  <rect x="238" y="170" width="12" height="46" rx="4" fill="rgba(34,197,94,0.38)"/>
+  <rect x="255" y="176" width="12" height="40" rx="4" fill="rgba(34,197,94,0.32)"/>
+  <rect x="272" y="163" width="12" height="53" rx="4" fill="rgba(34,197,94,0.42)"/>
+  <rect x="289" y="172" width="8" height="44" rx="4" fill="rgba(34,197,94,0.28)"/>
+  <!-- Transactions -->
+  <rect x="177" y="238" width="134" height="23" rx="8" fill="rgba(255,255,255,0.04)"/>
+  <circle cx="190" cy="249" r="7" fill="rgba(239,68,68,0.18)"/>
+  <rect x="203" y="244" width="52" height="4.5" rx="2" fill="rgba(255,255,255,0.18)"/>
+  <rect x="203" y="251" width="34" height="3.5" rx="1.5" fill="rgba(255,255,255,0.09)"/>
+  <rect x="279" y="245" width="26" height="5" rx="2" fill="rgba(239,68,68,0.55)"/>
+  <rect x="177" y="267" width="134" height="23" rx="8" fill="rgba(255,255,255,0.04)"/>
+  <circle cx="190" cy="278" r="7" fill="rgba(34,197,94,0.18)"/>
+  <rect x="203" y="273" width="52" height="4.5" rx="2" fill="rgba(255,255,255,0.18)"/>
+  <rect x="203" y="280" width="34" height="3.5" rx="1.5" fill="rgba(255,255,255,0.09)"/>
+  <rect x="279" y="274" width="26" height="5" rx="2" fill="rgba(34,197,94,0.55)"/>
+  <rect x="177" y="296" width="134" height="23" rx="8" fill="rgba(255,255,255,0.04)"/>
+  <circle cx="190" cy="307" r="7" fill="rgba(245,158,11,0.18)"/>
+  <rect x="203" y="302" width="52" height="4.5" rx="2" fill="rgba(255,255,255,0.18)"/>
+  <rect x="203" y="309" width="34" height="3.5" rx="1.5" fill="rgba(255,255,255,0.09)"/>
+  <rect x="279" y="303" width="26" height="5" rx="2" fill="rgba(245,158,11,0.55)"/>
+  <!-- Left person (yellow) -->
+  <circle cx="84" cy="112" r="25" fill="#f59e0b"/>
+  <ellipse cx="77" cy="107" rx="9" ry="7" fill="rgba(255,255,255,0.15)"/>
+  <rect x="68" y="137" width="32" height="50" rx="13" fill="#f59e0b"/>
+  <rect x="68" y="183" width="13" height="44" rx="7" fill="#d97706"/>
+  <rect x="87" y="183" width="13" height="44" rx="7" fill="#d97706"/>
+  <rect x="62" y="223" width="20" height="9" rx="4.5" fill="#92400e"/>
+  <rect x="82" y="223" width="20" height="9" rx="4.5" fill="#92400e"/>
+  <path d="M100 152 C120 145 142 148 158 153" stroke="#f59e0b" stroke-width="13" stroke-linecap="round" fill="none"/>
+  <rect x="50" y="144" width="18" height="11" rx="5.5" fill="#d97706"/>
+  <!-- Right person (teal) -->
+  <circle cx="376" cy="112" r="25" fill="#10b981"/>
+  <ellipse cx="369" cy="107" rx="9" ry="7" fill="rgba(255,255,255,0.15)"/>
+  <rect x="360" y="137" width="32" height="50" rx="13" fill="#10b981"/>
+  <rect x="360" y="183" width="13" height="44" rx="7" fill="#059669"/>
+  <rect x="379" y="183" width="13" height="44" rx="7" fill="#059669"/>
+  <rect x="354" y="223" width="20" height="9" rx="4.5" fill="#065f46"/>
+  <rect x="374" y="223" width="20" height="9" rx="4.5" fill="#065f46"/>
+  <path d="M360 152 C340 145 318 148 302 153" stroke="#10b981" stroke-width="13" stroke-linecap="round" fill="none"/>
+  <rect x="392" y="144" width="18" height="11" rx="5.5" fill="#059669"/>
+  <!-- Plant -->
+  <rect x="26" y="278" width="16" height="62" rx="6" fill="#4b5563"/>
+  <rect x="16" y="335" width="38" height="20" rx="6" fill="#374151"/>
+  <ellipse cx="34" cy="267" rx="31" ry="25" fill="#16a34a"/>
+  <ellipse cx="14" cy="284" rx="21" ry="17" fill="#15803d"/>
+  <ellipse cx="54" cy="284" rx="21" ry="17" fill="#15803d"/>
+  <ellipse cx="34" cy="250" rx="17" ry="14" fill="#22c55e" opacity="0.75"/>
+  <!-- Floating coin -->
+  <circle cx="58" cy="200" r="23" fill="#f59e0b" opacity="0.95"/>
+  <circle cx="58" cy="200" r="17" fill="#fbbf24"/>
+  <circle cx="58" cy="200" r="10" fill="#fcd34d" opacity="0.55"/>
+  <!-- Stats card (right) -->
+  <rect x="322" y="198" width="96" height="73" rx="14" fill="#111827" stroke="rgba(255,255,255,0.07)" stroke-width="1"/>
+  <rect x="334" y="210" width="46" height="5" rx="2.5" fill="rgba(255,255,255,0.25)"/>
+  <rect x="334" y="222" width="66" height="9" rx="3" fill="#22c55e" opacity="0.8"/>
+  <circle cx="352" cy="250" r="16" fill="none" stroke="#1f2937" stroke-width="6"/>
+  <circle cx="352" cy="250" r="16" fill="none" stroke="#22c55e" stroke-width="5" stroke-dasharray="20 80" stroke-dashoffset="25"/>
+  <circle cx="352" cy="250" r="16" fill="none" stroke="#3b82f6" stroke-width="5" stroke-dasharray="24 76" stroke-dashoffset="-15"/>
+  <circle cx="352" cy="250" r="16" fill="none" stroke="#f59e0b" stroke-width="5" stroke-dasharray="16 84" stroke-dashoffset="-39"/>
+  <rect x="376" y="241" width="34" height="9" rx="3" fill="rgba(255,255,255,0.5)"/>
+  <rect x="376" y="254" width="24" height="5" rx="2" fill="rgba(255,255,255,0.2)"/>
+  <!-- Sparkles -->
+  <circle cx="136" cy="40" r="5" fill="#22c55e" opacity="0.7"/>
+  <circle cx="318" cy="28" r="3.5" fill="#22c55e" opacity="0.5"/>
+  <circle cx="398" cy="74" r="5" fill="#f59e0b" opacity="0.6"/>
+  <circle cx="46" cy="252" r="3" fill="#3b82f6" opacity="0.5"/>
+  <circle cx="418" cy="185" r="4" fill="#22c55e" opacity="0.4"/>
+  <line x1="136" y1="40" x2="162" y2="68" stroke="rgba(34,197,94,0.18)" stroke-width="1.5" stroke-dasharray="4 4"/>
+  <line x1="318" y1="28" x2="300" y2="54" stroke="rgba(34,197,94,0.18)" stroke-width="1.5" stroke-dasharray="4 4"/>
+</svg>`;
+}
+
+function homePage() {
+    const features = [
+        { icon: 'check_circle', title: 'Easy to Use', desc: 'Our intuitive interface makes it effortless to track expenses and stay on top of your finances every day.' },
+        { icon: 'insights', title: 'Financial Insights', desc: 'Get detailed reports and visualizations to understand where your money goes and how to save more effectively.' },
+        { icon: 'today', title: 'Daily Tracking', desc: 'Easily log and categorize your daily expenses, ensuring you stay on top of your spending habits.' },
+        { icon: 'group', title: 'Group Expenses', desc: 'Organize shared expenses, split costs, and settle up easily with friends and family.' },
+        { icon: 'category', title: 'Categorization', desc: 'Our smart system automatically categorizes your expenses based on description, saving you time.' },
+        { icon: 'auto_awesome', title: 'AI-Driven Insights', desc: 'Get personalized spending insights and recommendations powered by AI to make smarter decisions.' },
+    ];
+    return `<div class="lp-wrap">
+        <nav class="lp-nav">
+            <a href="#home" class="lp-logo">
+                <div class="logo-icon" style="width:36px;height:36px;background:#22c55e;border-radius:10px;display:flex;align-items:center;justify-content:center;color:#000">
+                    <span class="material-icons-outlined" style="font-size:20px">account_balance</span>
+                </div>
+                <span class="lp-brand">spendwise</span>
+            </a>
+            <div class="lp-nav-right">
+                <a href="#login" class="lp-signin">Sign In</a>
+                <a href="#signup" class="lp-cta">Get Started &rarr;</a>
+            </div>
+        </nav>
+        <section class="lp-hero">
+            <div class="lp-hero-text">
+                <h1 class="lp-title">Take control of your<br>expenses today.</h1>
+                <p class="lp-tagline"><span>Track your spending, unleash your saving!</span><br><span>Transform expenses into financial freedom!</span></p>
+                <p class="lp-desc">SpendWise empowers you to make informed financial decisions. Our intuitive tools help you visualize your spending patterns, set realistic budgets, and achieve your financial goals with ease.</p>
+                <a href="#signup" class="lp-hero-btn">Start Your Journey &rarr;</a>
+            </div>
+            <div class="lp-hero-visual">${landingIllustration()}</div>
+        </section>
+        <section class="lp-features">
+            <h2 class="lp-features-title">Why SpendWise?</h2>
+            <div class="lp-features-grid">
+                ${features.map(f => `<div class="lp-feature-card">
+                    <div class="lp-feature-icon"><span class="material-icons-outlined">${f.icon}</span></div>
+                    <h3>${f.title}</h3>
+                    <p>${f.desc}</p>
+                </div>`).join('')}
+            </div>
+        </section>
+        <footer class="lp-footer">
+            <div class="lp-footer-logo">
+                <div class="logo-icon" style="width:30px;height:30px;background:#22c55e;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#000">
+                    <span class="material-icons-outlined" style="font-size:17px">account_balance</span>
+                </div>
+                SpendWise
+            </div>
+            <p class="lp-footer-copy">&copy; 2026 SpendWise. All rights reserved.</p>
+            <div class="lp-footer-links">
+                <a href="#login">Sign In</a>
+                <a href="#signup">Create Account</a>
+            </div>
+        </footer>
+    </div>`;
 }
 
 // ========== AUTH PAGES ==========
