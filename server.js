@@ -3,13 +3,26 @@ const cors = require('cors');
 
 const app = express();
 
-// ── Middleware ────────────────────────────────────────────────
+// ── CORS ──────────────────────────────────────────────────────
+const allowedOrigins = [
+    'https://smartmoneyledger.online',
+    'https://www.smartmoneyledger.online',
+    process.env.FRONTEND_URL,
+    'http://localhost:3000',
+    'http://127.0.0.1:5500',
+].filter(Boolean);
+
 app.use(cors({
-    origin: process.env.FRONTEND_URL || '*',
+    origin: function (origin, callback) {
+        // Allow requests with no origin (curl, Render health checks)
+        if (!origin || allowedOrigins.includes(origin)) return callback(null, true);
+        callback(new Error('CORS: origin not allowed → ' + origin));
+    },
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true
 }));
+app.options('*', cors()); // handle preflight for all routes
 app.use(express.json());
 
 // ── Routes (reuse existing serverless handlers) ───────────────
