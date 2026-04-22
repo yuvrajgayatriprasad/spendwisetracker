@@ -458,10 +458,10 @@ function analyticsPage() {
             </div>
         </div>
         <div class="stat-cards">
-            <div class="stat-card"><div class="stat-label">Total Spending</div><div class="stat-value">${fmt(4285.40)}</div><div class="stat-change negative">↑ +2%</div></div>
-            <div class="stat-card"><div class="stat-label">Savings Potential</div><div class="stat-value" style="color:var(--success)">${fmt(840)}</div><div class="stat-change positive">Based on reduced spending</div></div>
-            <div class="stat-card"><div class="stat-label">Highest Category</div><div class="stat-value" style="font-size:1.3rem">Dining Out</div><div class="stat-change" style="color:var(--text-muted)">28% of total spending</div></div>
-            <div class="stat-card"><div class="stat-label">Days to Goal</div><div class="stat-value">14 Days</div><div class="stat-change" style="color:var(--text-muted)">To reach Hawaii Trip target</div></div>
+            <div class="stat-card"><div class="stat-label">Total Spending</div><div class="stat-value">${fmt(0)}</div><div class="stat-change negative" style="display:none"></div></div>
+            <div class="stat-card"><div class="stat-label">Savings Potential</div><div class="stat-value" style="color:var(--success)">${fmt(0)}</div><div class="stat-change positive" style="display:none"></div></div>
+            <div class="stat-card"><div class="stat-label">Highest Category</div><div class="stat-value" style="font-size:1.3rem">None</div><div class="stat-change" style="color:var(--text-muted)">Need more data</div></div>
+            <div class="stat-card"><div class="stat-label">Days to Goal</div><div class="stat-value">N/A</div><div class="stat-change" style="color:var(--text-muted)">No active goals</div></div>
         </div>
         <div class="content-grid">
             <div class="card"><div class="card-header"><h2>Spending Trends</h2><span style="font-size:.75rem;color:var(--text-muted)">MAY 1 - MAY 31, 2024</span></div>
@@ -473,9 +473,9 @@ function analyticsPage() {
             </div>
         </div>
         <div class="card"><div class="card-header"><h2>Monthly Budget Progress</h2></div>
-            <div class="budget-category"><div class="budget-category-header"><div class="budget-cat-icon" style="background:#FEE2E2;color:#DC2626"><span class="material-icons-outlined">restaurant</span></div><div class="budget-cat-info"><div class="cat-name">Dining &amp; Leisure</div><div class="cat-desc"><span style="color:var(--danger);font-weight:600">⚠ NEAR LIMIT</span></div></div><div class="budget-cat-amounts"><div class="spent">${fmtWhole('780')} <span class="total">/ ${fmtWhole('800')}</span></div></div></div><div class="budget-bar"><div class="budget-bar-fill red" style="width:97%"></div></div></div>
-            <div class="budget-category"><div class="budget-category-header"><div class="budget-cat-icon" style="background:#D1FAE5;color:#059669"><span class="material-icons-outlined">shopping_cart</span></div><div class="budget-cat-info"><div class="cat-name">Groceries</div></div><div class="budget-cat-amounts"><div class="spent">${fmtWhole('340')} <span class="total">/ ${fmtWhole('600')}</span></div></div></div><div class="budget-bar"><div class="budget-bar-fill blue" style="width:57%"></div></div></div>
-            <div class="budget-category"><div class="budget-category-header"><div class="budget-cat-icon" style="background:#DBEAFE;color:#2563EB"><span class="material-icons-outlined">directions_car</span></div><div class="budget-cat-info"><div class="cat-name">Transportation</div></div><div class="budget-cat-amounts"><div class="spent">${fmtWhole('120')} <span class="total">/ ${fmtWhole('400')}</span></div></div></div><div class="budget-bar"><div class="budget-bar-fill green" style="width:30%"></div></div></div>
+            <div class="budget-category"><div class="budget-category-header"><div class="budget-cat-icon" style="background:#FEE2E2;color:#DC2626"><span class="material-icons-outlined">restaurant</span></div><div class="budget-cat-info"><div class="cat-name">Dining &amp; Leisure</div><div class="cat-desc"></div></div><div class="budget-cat-amounts"><div class="spent">${fmtWhole('0')} <span class="total">/ ${fmtWhole('0')}</span></div></div></div><div class="budget-bar"><div class="budget-bar-fill red" style="width:0%"></div></div></div>
+            <div class="budget-category"><div class="budget-category-header"><div class="budget-cat-icon" style="background:#D1FAE5;color:#059669"><span class="material-icons-outlined">shopping_cart</span></div><div class="budget-cat-info"><div class="cat-name">Groceries</div></div><div class="budget-cat-amounts"><div class="spent">${fmtWhole('0')} <span class="total">/ ${fmtWhole('0')}</span></div></div></div><div class="budget-bar"><div class="budget-bar-fill blue" style="width:0%"></div></div></div>
+            <div class="budget-category"><div class="budget-category-header"><div class="budget-cat-icon" style="background:#DBEAFE;color:#2563EB"><span class="material-icons-outlined">directions_car</span></div><div class="budget-cat-info"><div class="cat-name">Transportation</div></div><div class="budget-cat-amounts"><div class="spent">${fmtWhole('0')} <span class="total">/ ${fmtWhole('0')}</span></div></div></div><div class="budget-bar"><div class="budget-bar-fill green" style="width:0%"></div></div></div>
         </div>
     `);
 }
@@ -499,9 +499,9 @@ function budgetsPage() {
             <div class="page-header-actions"><button class="btn-new" onclick="showToast('New budget form coming soon','info')"><span class="material-icons-outlined" style="font-size:18px">add</span> New Budget</button></div>
         </div>
         <div class="stat-cards">
-            <div class="stat-card"><div class="stat-label">Total Budgeted</div><div class="stat-value">${fmt(4500)}</div></div>
-            <div class="stat-card"><div class="stat-label">Total Spent</div><div class="stat-value" style="color:var(--primary)">${fmt(3259.50)}</div></div>
-            <div class="stat-card"><div class="stat-label">Remaining</div><div class="stat-value" style="color:var(--success)">${fmt(1240.50)}</div></div>
+            <div class="stat-card"><div class="stat-label">Total Budgeted</div><div class="stat-value">${fmt(0)}</div></div>
+            <div class="stat-card"><div class="stat-label">Total Spent</div><div class="stat-value" style="color:var(--primary)">${fmt(0)}</div></div>
+            <div class="stat-card"><div class="stat-label">Remaining</div><div class="stat-value" style="color:var(--success)">${fmt(0)}</div></div>
         </div>
         <div class="card"><div class="card-header"><h2>Monthly Category Allocation</h2></div>
             ${budgetCategories().map(c => `<div class="budget-category"><div class="budget-category-header"><div class="budget-cat-icon" style="background:${c.bg};color:${c.color}"><span class="material-icons-outlined">${c.icon}</span></div><div class="budget-cat-info"><div class="cat-name">${c.name}</div><div class="cat-desc">${c.desc}</div></div><div class="budget-cat-amounts"><div class="spent">${fmtWhole(c.spent)} <span class="total">/ ${fmtWhole(c.total)}</span></div><div class="pct ${c.pct >= 90 ? 'critical' : ''}">${c.pct >= 90 ? 'Critical: ' : ''}${c.pct}% utilized</div></div></div><div class="budget-bar"><div class="budget-bar-fill ${c.pct >= 90 ? 'red' : c.pct >= 70 ? 'orange' : 'blue'}" style="width:${c.pct}%"></div></div></div>`).join('')}
@@ -516,9 +516,9 @@ function savingsPage() {
             <div class="page-header-actions"><button class="btn-new" onclick="showToast('New goal form coming soon','info')"><span class="material-icons-outlined" style="font-size:18px">add</span> Add New Goal</button></div>
         </div>
         <div class="stat-cards">
-            <div class="stat-card"><div class="stat-label">Total Saved</div><div class="stat-value">${fmt(14250)}</div><div class="stat-change positive">↑ +${fmtWhole('1,200')} this month</div></div>
-            <div class="stat-card"><div class="stat-label">Monthly Goal</div><div class="stat-value">${fmt(2500)}</div><div class="stat-bar"><div class="stat-bar-fill" style="width:72%"></div></div></div>
-            <div class="stat-card"><div class="stat-label">Active Goals</div><div class="stat-value">4 Goals</div><div class="stat-change" style="color:var(--text-muted)">2 goals near completion</div></div>
+            <div class="stat-card"><div class="stat-label">Total Saved</div><div class="stat-value">${fmt(0)}</div><div class="stat-change positive" style="display:none"></div></div>
+            <div class="stat-card"><div class="stat-label">Monthly Goal</div><div class="stat-value">${fmt(0)}</div><div class="stat-bar"><div class="stat-bar-fill" style="width:0%"></div></div></div>
+            <div class="stat-card"><div class="stat-label">Active Goals</div><div class="stat-value">0 Goals</div><div class="stat-change" style="color:var(--text-muted)">Start saving today</div></div>
         </div>
         <div class="savings-goals-grid">
             ${savingsGoals().map(g => `<div class="savings-goal-card"><div class="goal-image" style="background-image:url('${g.img}');background-color:${g.bg}"><div class="goal-tag">${g.tag}</div></div><div class="goal-details"><h3>${g.name}</h3><p class="goal-desc">${g.desc}</p><div class="goal-amounts"><span class="goal-amt">${fmtWhole(g.saved)}</span><span class="goal-amt target">${fmtWhole(g.target)}</span></div><div class="goal-meta"><span class="material-icons-outlined" style="font-size:16px">schedule</span>Target: ${g.date}</div><span class="goal-add-funds" onclick="showToast('Funds added successfully!')"><span class="material-icons-outlined" style="font-size:16px">add_circle</span> Add Funds</span></div></div>`).join('')}
@@ -526,9 +526,7 @@ function savingsPage() {
         </div>
         <div class="card"><div class="card-header"><h2>Recent Contributions</h2></div>
             <table class="contributions-table"><thead><tr><th>Goal</th><th>Date</th><th>Amount</th><th>Status</th></tr></thead><tbody>
-                <tr><td><span class="goal-dot" style="background:#3B82F6"></span>Hawaii Trip</td><td>Oct 24, 2023</td><td style="color:var(--success);font-weight:600">+${fmt(250)}</td><td><span class="status-badge">Completed</span></td></tr>
-                <tr><td><span class="goal-dot" style="background:#10B981"></span>House Down Payment</td><td>Oct 22, 2023</td><td style="color:var(--success);font-weight:600">+${fmt(600)}</td><td><span class="status-badge">Completed</span></td></tr>
-                <tr><td><span class="goal-dot" style="background:#EF4444"></span>Emergency Fund</td><td>Oct 15, 2023</td><td style="color:var(--success);font-weight:600">+${fmt(150)}</td><td><span class="status-badge">Completed</span></td></tr>
+                <tr><td colspan="4" style="text-align:center;color:var(--text-muted)">No recent contributions</td></tr>
             </tbody></table>
             <a class="view-all-link" onclick="showToast('Full history coming soon','info')">View All History</a>
         </div>
@@ -557,34 +555,20 @@ function settingsPage() {
 
 // ========== DATA ==========
 
-const transactions = [
-    { name: 'Whole Foods Market', cat: 'Groceries', catClass: 'groceries', icon: 'shopping_cart', amount: -84.20, time: '10:24 AM', method: 'Debit Card', date: 'Today' },
-    { name: 'Freelance Payment', cat: 'Income', catClass: 'income', icon: 'payments', amount: 1200, time: '09:15 AM', method: 'Direct Deposit', date: 'Today' },
-    { name: 'Starbucks Coffee', cat: 'Food & Drink', catClass: 'food', icon: 'coffee', amount: -6.50, time: '4:45 PM', method: 'Apple Pay', date: 'Yesterday' },
-    { name: 'Uber Trip', cat: 'Transport', catClass: 'transport', icon: 'local_taxi', amount: -24.18, time: '1:12 PM', method: 'Debit Card', date: 'Yesterday' },
-    { name: 'Netflix Subscription', cat: 'Entertainment', catClass: 'entertainment', icon: 'movie', amount: -15.99, time: '08:00 AM', method: 'Recurring', date: 'Yesterday' },
-    { name: 'Salary Deposit', cat: 'Income', catClass: 'income', icon: 'account_balance', amount: 4500, time: '09:00 AM', method: 'ACH Transfer', date: 'October 20, 2023' },
-    { name: 'Rent Payment', cat: 'Housing', catClass: 'housing', icon: 'home', amount: -2100, time: '09:00 AM', method: 'ACH Transfer', date: 'October 20, 2023' },
-    { name: 'Equinox Gym', cat: 'Health', catClass: 'health', icon: 'fitness_center', amount: -185, time: '06:45 AM', method: 'Debit Card', date: 'October 20, 2023' },
-    { name: 'Electric Bill', cat: 'Utilities', catClass: 'utilities', icon: 'bolt', amount: -85, time: '10:00 AM', method: 'Auto Pay', date: 'October 18, 2023' },
-];
+const transactions = [];
 
 function budgetCategories() {
     return [
-        { name: 'Housing', desc: 'Rent, Utilities, Maintenance', icon: 'home', bg: '#E0E7FF', color: '#4338CA', spent: '1,700', total: '2,000', pct: 85 },
-        { name: 'Food & Groceries', desc: 'Supermarkets, Dining out', icon: 'restaurant', bg: '#FEF3C7', color: '#D97706', spent: '450', total: '800', pct: 56 },
-        { name: 'Leisure', desc: 'Entertainment, Movies, Hobbies', icon: 'sports_esports', bg: '#EDE9FE', color: '#7C3AED', spent: '320', total: '400', pct: 80 },
-        { name: 'Transportation', desc: 'Fuel, Public Transit, Repairs', icon: 'directions_car', bg: '#DBEAFE', color: '#2563EB', spent: '150', total: '500', pct: 30 },
-        { name: 'Health', desc: 'Gym, Pharmacy, Insurance', icon: 'favorite', bg: '#FCE7F3', color: '#DB2777', spent: '750', total: '800', pct: 94 },
+        { name: 'Housing', desc: 'Rent, Utilities, Maintenance', icon: 'home', bg: '#E0E7FF', color: '#4338CA', spent: '0', total: '0', pct: 0 },
+        { name: 'Food & Groceries', desc: 'Supermarkets, Dining out', icon: 'restaurant', bg: '#FEF3C7', color: '#D97706', spent: '0', total: '0', pct: 0 },
+        { name: 'Leisure', desc: 'Entertainment, Movies, Hobbies', icon: 'sports_esports', bg: '#EDE9FE', color: '#7C3AED', spent: '0', total: '0', pct: 0 },
+        { name: 'Transportation', desc: 'Fuel, Public Transit, Repairs', icon: 'directions_car', bg: '#DBEAFE', color: '#2563EB', spent: '0', total: '0', pct: 0 },
+        { name: 'Health', desc: 'Gym, Pharmacy, Insurance', icon: 'favorite', bg: '#FCE7F3', color: '#DB2777', spent: '0', total: '0', pct: 0 },
     ];
 }
 
 function savingsGoals() {
-    return [
-        { name: 'Hawaii Trip', desc: 'Dream vacation to Maui & Oahu', tag: 'Travel', img: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=400&h=200&fit=crop', bg: '#3B82F6', saved: '3,500', target: '5,000', date: 'June 2024' },
-        { name: 'Emergency Fund', desc: '6 months of essential expenses', tag: 'Financial', img: 'https://images.unsplash.com/photo-1466692476868-aef1dfb1e735?w=400&h=200&fit=crop', bg: '#10B981', saved: '8,000', target: '10,000', date: 'Dec 2024' },
-        { name: 'House Down Payment', desc: 'First home deposit fund', tag: 'Real Estate', img: 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=400&h=200&fit=crop', bg: '#8B5CF6', saved: '15,000', target: '50,000', date: 'June 2025' },
-    ];
+    return [];
 }
 
 function renderTransactions(containerId, txs) {
