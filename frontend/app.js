@@ -981,27 +981,48 @@ function parseTransactionsFromText(text) {
         let txType = 'withdrawal'; // default
         let desc = rawDesc;
 
-        // UPI format: UPIXX/REFNUM/DR/NAME/BANK/... or /CR/NAME/...
-        const upiMatch = rawDesc.match(/\/(?:DR|CR)\/([^\/\s@][^\/]*?)(?:\/|\s*$)/i);
+        // Determine txType from DR/CR markers in the line
         const typeMatch = rawDesc.match(/\/(DR|CR)\//i);
         if (typeMatch) {
             txType = typeMatch[1].toUpperCase() === 'CR' ? 'deposit' : 'withdrawal';
         }
-        if (upiMatch) {
-            // Clean name: remove underscores, trailing numbers, email-like strings
-            desc = upiMatch[1].replace(/[_]/g, ' ').replace(/\d{6,}/g, '').replace(/[@\.][\w\.]+/g, '').trim();
-        } else {
-            // Non-UPI: general cleanup (don't strip /DR/ /CR/ since already extracted)
-            desc = rawDesc
-                .replace(/\b\d{8,}\b/g, '')   // long ref numbers
-                .replace(/[|*#_]/g, '')
-                .replace(/\s+/g, ' ')
-                .trim();
-            desc = desc.replace(/^(debit|credit|purchase|payment|pos|atm|ach|upi|neft|imps|rtgs)\s*/i, '').trim();
+        // Also detect txType from separate debit/credit columns (two amounts = debit col + balance col)
+        if (amountMatches.length >= 2) {
+            // If the line has "Cr" suffix it was a credit/deposit
+            if (/\bCr\.?\s*$/.test(line)) txType = 'deposit';
+            else if (/\bDr\.?\s*$/.test(line)) txType = 'withdrawal';
         }
 
-        // If desc still short, look AHEAD up to 3 lines for particulars
-        if (desc.length < 3) {
+        // UPI format: UPI/REFNUM/DR/NAME/BANK/... or /CR/NAME/...
+        const upiMatch = rawDesc.match(/\/(?:DR|CR)\/([^\/\s@][^\/]*?)(?:\/|\s*$)/i);
+        if (upiMatch) {
+            // Clean name: remove underscores, trailing numbers, email-like strings
+            desc = upiMatch[1]
+                .replace(/[_]/g, ' ')
+                .replace(/\d{6,}/g, '')
+                .replace(/[@\.][\w\.]+/g, '')
+                .trim();
+        } else {
+            // NEFT/IMPS/RTGS: try to get the sender/receiver name after the ref number
+            // Format: NEFT/IMPS REF12345678 SOME NAME HERE
+            const neftMatch = rawDesc.match(/(?:NEFT|IMPS|RTGS|NACH)[^a-zA-Z]*\d+[^a-zA-Z]*([a-zA-Z][a-zA-Z\s\-&'.]{2,40})/i);
+            if (neftMatch) {
+                desc = neftMatch[1].trim();
+            } else {
+                // Non-UPI: general cleanup
+                desc = rawDesc
+                    .replace(/\b\d{8,}\b/g, '')   // long ref numbers
+                    .replace(/[|*#_]/g, '')
+                    .replace(/\s+/g, ' ')
+                    .trim();
+                desc = desc.replace(/^(debit|credit|purchase|payment|pos|atm|ach|upi|neft|imps|rtgs)\s*/i, '').trim();
+            }
+        }
+
+        // If desc is purely numeric or too short, look AHEAD up to 3 lines for particulars
+        const isPurelyNumeric = /^[\d\s\-\/,.:]+$/.test(desc);
+        if (desc.length < 3 || isPurelyNumeric) {
+            desc = '';
             for (let j = i + 1; j <= Math.min(i + 3, lines.length - 1); j++) {
                 const next = lines[j].trim();
                 if (!next || skipPat.test(next) || hasDate(next)) break;
@@ -1012,7 +1033,8 @@ function parseTransactionsFromText(text) {
                 const nextUpi = next.match(/\/(?:DR|CR)\/([^\/\s@][^\/]*?)(?:\/|\s*$)/i);
                 if (nextUpi) { desc = nextUpi[1].replace(/[_]/g, ' ').replace(/\d{6,}/g, '').replace(/[@\.][\w\.]+/g, '').trim(); break; }
                 const candidate = next.replace(amountPat, '').replace(/\b\d{8,}\b/g, '').replace(/[|*#_]/g, '').replace(/\s+/g, ' ').trim();
-                if (candidate.length >= 2) { desc = candidate; break; }
+                // Only use candidate if it contains at least one letter
+                if (candidate.length >= 2 && /[a-zA-Z]/.test(candidate)) { desc = candidate; break; }
             }
         }
 
@@ -1021,7 +1043,9 @@ function parseTransactionsFromText(text) {
             const prev = lines[i - 1].trim();
             if (prev && !skipPat.test(prev) && !hasDate(prev)) {
                 const prevAmts = [...prev.matchAll(amountPat)];
-                if (!prevAmts.length) desc = prev.replace(/[|*#_]/g, '').replace(/\s+/g, ' ').trim();
+                if (!prevAmts.length && /[a-zA-Z]/.test(prev)) {
+                    desc = prev.replace(/[|*#_]/g, '').replace(/\s+/g, ' ').trim();
+                }
             }
         }
 
@@ -1030,9 +1054,7 @@ function parseTransactionsFromText(text) {
         // Set correct sign: deposit = positive income, withdrawal = negative expense
         const finalAmount = txType === 'deposit' ? absVal : -absVal;
 
-        const cat = autoCategorize(desc);
-        const meta = getCatMeta(cat);
-        results.push({ name: desc.slice(0, 80), date: formatImportDate(dateResult.str), amount: finalAmount, txType, cat, catClass: meta.catClass, icon: meta.icon, time: 'Imported', method: 'Bank Import' });
+        results.push({ name: desc.slice(0, 80), date: formatImportDate(dateResult.str), amount: finalAmount, txType, cat: autoCategorize(desc), catClass: getCatMeta(autoCategorize(desc)).catClass, icon: getCatMeta(autoCategorize(desc)).icon, time: 'Imported', method: 'Bank Import' });
     }
 
     const seen = new Set();
