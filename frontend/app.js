@@ -426,9 +426,9 @@ function dashboardPage() {
             <div class="page-header-actions"><button class="btn-new" onclick="showTransactionModal()"><span class="material-icons-outlined" style="font-size:18px">add</span> New Entry</button></div>
         </div>
         <div class="stat-cards">
-            <div class="stat-card primary-card"><div class="stat-label">Total Balance</div><div class="stat-value">${fmt(12450.80)}</div><div class="stat-change positive">↑ +12.5% from last month</div></div>
-            <div class="stat-card"><div class="stat-label">This Month's Spending</div><div class="stat-value">${fmt(3240.15)}</div><div class="stat-bar"><div class="stat-bar-fill" style="width:65%"></div></div><div class="stat-change" style="color:var(--text-muted);margin-top:6px">65% of your monthly budget used</div></div>
-            <div class="stat-card"><div class="stat-label">Daily Average</div><div class="stat-value">${fmt(104.50)}</div><div class="stat-change negative">↑ 5% more than average</div></div>
+            <div class="stat-card primary-card"><div class="stat-label">Total Balance</div><div class="stat-value" id="dashTotalBalance">${fmt(0)}</div><div class="stat-change positive" id="dashBalanceChange" style="display:none"></div></div>
+            <div class="stat-card"><div class="stat-label">This Month's Spending</div><div class="stat-value" id="dashMonthlySpend">${fmt(0)}</div><div class="stat-bar"><div class="stat-bar-fill" id="dashMonthlySpendBar" style="width:0%"></div></div><div class="stat-change" style="color:var(--text-muted);margin-top:6px" id="dashMonthlySpendText">Calculate based on transactions</div></div>
+            <div class="stat-card"><div class="stat-label">Daily Average</div><div class="stat-value" id="dashDailyAvg">${fmt(0)}</div><div class="stat-change negative" id="dashDailyAvgChange" style="display:none"></div></div>
         </div>
         <div class="content-grid">
             <div class="card quick-add"><h3><span class="material-icons-outlined">bolt</span> Quick Add</h3>
@@ -1208,6 +1208,8 @@ async function loadUserTransactions(containerId, limit) {
     try {
         const data = await api('transactions', null, 'GET');
         let txs = data.transactions || [];
+        if (currentPage === 'dashboard') updateDashboardStats(txs);
+
         if (limit) txs = txs.slice(0, limit);
         if (txs.length > 0) {
             renderTransactions(containerId, txs);
@@ -1217,9 +1219,42 @@ async function loadUserTransactions(containerId, limit) {
                 'No transactions yet.<br><span style="font-size:12px;margin-top:4px;display:inline-block;">Add your first transaction or import from a PDF bank statement.</span></li>';
         }
     } catch (err) {
+        if (currentPage === 'dashboard') updateDashboardStats([]);
         el.innerHTML = '<li style="text-align:center;padding:24px 16px;color:#ef4444;font-size:13px;">' +
             '<span class="material-icons-outlined" style="font-size:36px;display:block;margin-bottom:8px;">cloud_off</span>' +
             'Could not load transactions.<br><span style="font-size:12px;">Please check your connection and try again.</span></li>';
     }
+}
+
+function updateDashboardStats(txs) {
+    if (currentPage !== 'dashboard') return;
+    
+    let balance = 0;
+    let monthSpend = 0;
+    const now = new Date();
+    const currentMonth = now.getMonth();
+    const currentYear = now.getFullYear();
+
+    txs.forEach(tx => {
+        balance += tx.amount;
+        const txDate = new Date(tx.date);
+        if (!isNaN(txDate.getTime())) {
+            if (tx.amount < 0 && txDate.getMonth() === currentMonth && txDate.getFullYear() === currentYear) {
+                monthSpend += Math.abs(tx.amount);
+            }
+        } else if (tx.date === 'Today' || tx.date === 'Yesterday') {
+            if (tx.amount < 0) monthSpend += Math.abs(tx.amount);
+        }
+    });
+
+    const elBal = document.getElementById('dashTotalBalance');
+    if (elBal) elBal.innerHTML = fmt(balance);
+    
+    const elSpend = document.getElementById('dashMonthlySpend');
+    if (elSpend) elSpend.innerHTML = fmt(monthSpend);
+
+    const elAvg = document.getElementById('dashDailyAvg');
+    const daysInMonth = now.getDate();
+    if (elAvg) elAvg.innerHTML = fmt(monthSpend / Math.max(1, daysInMonth));
 }
 
