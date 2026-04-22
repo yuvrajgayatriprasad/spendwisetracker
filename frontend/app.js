@@ -10,8 +10,10 @@ let resetToken = ''; // temporary token for password reset
 
 // ========== API HELPER ==========
 
-// 🔧 Replace this with your actual Render URL after deploying the backend
-const API_BASE = 'https://YOUR-APP-NAME.onrender.com';
+// Auto-detect: local dev uses localhost:3001, production uses Render
+const API_BASE = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+    ? 'http://localhost:3001'
+    : 'https://spendwisetracker-2.onrender.com';
 
 async function api(endpoint, body, method) {
     method = method || (body ? 'POST' : 'GET');
@@ -65,12 +67,12 @@ function fmtWhole(n) { return cs() + n; }
 
 function currencySelect(extraClass) {
     const cur = getCurrency();
-    return `<select class="currency-select ${extraClass||''}" onchange="onCurrencyChange(this.value)">${Object.keys(currencyMap).map(c => `<option value="${c}" ${c===cur?'selected':''}>${currencyMap[c].short}</option>`).join('')}</select>`;
+    return `<select class="currency-select ${extraClass || ''}" onchange="onCurrencyChange(this.value)">${Object.keys(currencyMap).map(c => `<option value="${c}" ${c === cur ? 'selected' : ''}>${currencyMap[c].short}</option>`).join('')}</select>`;
 }
 
 function settingsCurrencySelect() {
     const cur = getCurrency();
-    return `<select id="settingsCurrency" onchange="onCurrencyChange(this.value)">${Object.keys(currencyMap).map(c => `<option value="${c}" ${c===cur?'selected':''}>${currencyMap[c].label}</option>`).join('')}</select>`;
+    return `<select id="settingsCurrency" onchange="onCurrencyChange(this.value)">${Object.keys(currencyMap).map(c => `<option value="${c}" ${c === cur ? 'selected' : ''}>${currencyMap[c].label}</option>`).join('')}</select>`;
 }
 
 function onCurrencyChange(code) {
@@ -89,12 +91,12 @@ function render() {
     const page = window.location.hash.slice(1) || 'home';
     currentPage = page;
     // Auth guard: redirect to login if not authenticated on protected pages
-    const protectedPages = ['dashboard','analytics','transactions','budgets','savings','settings'];
+    const protectedPages = ['dashboard', 'analytics', 'transactions', 'budgets', 'savings', 'settings'];
     if (protectedPages.includes(page) && !isLoggedIn()) {
         navigate('login'); return;
     }
     // Redirect to dashboard if already logged in and visiting auth pages
-    const authPages = ['login','signup','home'];
+    const authPages = ['login', 'signup', 'home'];
     if (authPages.includes(page) && isLoggedIn()) {
         navigate('dashboard'); return;
     }
@@ -389,7 +391,7 @@ function otpPage() {
         <h1>${authFlowType === 'reset' ? 'Reset Password' : 'Verify Your Identity'}</h1>
         ${emailDisplay}
         <div id="authError" class="auth-error" style="display:none"></div>
-        <div class="otp-inputs">${[0,1,2,3,4,5].map((i) => `<input class="otp-input" type="text" maxlength="1" id="otp${i}" ${i===0?'autofocus':''}>`).join('')}</div>
+        <div class="otp-inputs">${[0, 1, 2, 3, 4, 5].map((i) => `<input class="otp-input" type="text" maxlength="1" id="otp${i}" ${i === 0 ? 'autofocus' : ''}>`).join('')}</div>
         <button class="btn-primary" id="verifyBtn">Verify &amp; Continue</button>
         <div class="resend-wrap" style="margin-top:16px">Didn't receive code?<br><button class="resend-btn" id="resendBtn">Resend OTP</button> <span class="resend-timer" id="resendTimer">00:59</span></div>
     </div>`);
@@ -441,7 +443,7 @@ function dashboardPage() {
         </div>
         <div class="content-grid" style="margin-top:0">
             <div class="card"><div class="card-header"><h2>Daily Spending</h2><span style="font-size:0.78rem;color:var(--text-muted)">LAST 7 DAYS</span></div>
-                <div class="bar-chart">${['MON','TUE','WED','THU','FRI','SAT','SUN'].map((d,i) => {const h = [45,65,30,80,55,20,70][i]; return `<div class="bar-group"><div class="bar ${i===3?'active':''}" style="height:${h}%"></div><span class="bar-label">${d}</span></div>`;}).join('')}</div>
+                <div class="bar-chart">${['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'].map((d, i) => { const h = [45, 65, 30, 80, 55, 20, 70][i]; return `<div class="bar-group"><div class="bar ${i === 3 ? 'active' : ''}" style="height:${h}%"></div><span class="bar-label">${d}</span></div>`; }).join('')}</div>
             </div>
         </div>
         <div id="modalContainer"></div>
@@ -502,7 +504,7 @@ function budgetsPage() {
             <div class="stat-card"><div class="stat-label">Remaining</div><div class="stat-value" style="color:var(--success)">${fmt(1240.50)}</div></div>
         </div>
         <div class="card"><div class="card-header"><h2>Monthly Category Allocation</h2></div>
-            ${budgetCategories().map(c => `<div class="budget-category"><div class="budget-category-header"><div class="budget-cat-icon" style="background:${c.bg};color:${c.color}"><span class="material-icons-outlined">${c.icon}</span></div><div class="budget-cat-info"><div class="cat-name">${c.name}</div><div class="cat-desc">${c.desc}</div></div><div class="budget-cat-amounts"><div class="spent">${fmtWhole(c.spent)} <span class="total">/ ${fmtWhole(c.total)}</span></div><div class="pct ${c.pct>=90?'critical':''}">${c.pct>=90?'Critical: ':''}${c.pct}% utilized</div></div></div><div class="budget-bar"><div class="budget-bar-fill ${c.pct>=90?'red':c.pct>=70?'orange':'blue'}" style="width:${c.pct}%"></div></div></div>`).join('')}
+            ${budgetCategories().map(c => `<div class="budget-category"><div class="budget-category-header"><div class="budget-cat-icon" style="background:${c.bg};color:${c.color}"><span class="material-icons-outlined">${c.icon}</span></div><div class="budget-cat-info"><div class="cat-name">${c.name}</div><div class="cat-desc">${c.desc}</div></div><div class="budget-cat-amounts"><div class="spent">${fmtWhole(c.spent)} <span class="total">/ ${fmtWhole(c.total)}</span></div><div class="pct ${c.pct >= 90 ? 'critical' : ''}">${c.pct >= 90 ? 'Critical: ' : ''}${c.pct}% utilized</div></div></div><div class="budget-bar"><div class="budget-bar-fill ${c.pct >= 90 ? 'red' : c.pct >= 70 ? 'orange' : 'blue'}" style="width:${c.pct}%"></div></div></div>`).join('')}
             <div class="smart-tip"><span class="material-icons-outlined">lightbulb</span><span><strong>Smart Tip:</strong> You're currently spending 15% less on Transportation. Consider moving $75 to your Leisure budget.</span></div>
         </div>
     `);
@@ -595,9 +597,9 @@ function renderTransactions(containerId, txs) {
         const typeBadge = tx.txType === 'deposit'
             ? `<span style="font-size:10px;font-weight:700;letter-spacing:.5px;color:#10b981;background:rgba(16,185,129,.12);padding:2px 7px;border-radius:20px">DEPOSIT</span>`
             : tx.txType === 'withdrawal'
-            ? `<span style="font-size:10px;font-weight:700;letter-spacing:.5px;color:#ef4444;background:rgba(239,68,68,.12);padding:2px 7px;border-radius:20px">WITHDRAWAL</span>`
-            : '';
-        html += `<li class="transaction-item"><div class="transaction-icon ${tx.catClass}"><span class="material-icons-outlined">${tx.icon}</span></div><div class="transaction-info"><div class="name">${tx.name}</div><div class="category">${typeBadge} ${tx.cat} • ${tx.time}</div></div><div class="transaction-meta"><div class="amount" style="color:${isPos?'#10b981':'#ef4444'};font-weight:700">${isPos?'+':''}${fmt(tx.amount)}</div><div class="method">${tx.method}</div></div></li>`;
+                ? `<span style="font-size:10px;font-weight:700;letter-spacing:.5px;color:#ef4444;background:rgba(239,68,68,.12);padding:2px 7px;border-radius:20px">WITHDRAWAL</span>`
+                : '';
+        html += `<li class="transaction-item"><div class="transaction-icon ${tx.catClass}"><span class="material-icons-outlined">${tx.icon}</span></div><div class="transaction-info"><div class="name">${tx.name}</div><div class="category">${typeBadge} ${tx.cat} • ${tx.time}</div></div><div class="transaction-meta"><div class="amount" style="color:${isPos ? '#10b981' : '#ef4444'};font-weight:700">${isPos ? '+' : ''}${fmt(tx.amount)}</div><div class="method">${tx.method}</div></div></li>`;
     });
     el.innerHTML = html;
 }
@@ -715,8 +717,8 @@ function initPageLogic(page) {
 function initOtp() {
     const inputs = document.querySelectorAll('.otp-input');
     inputs.forEach((inp, i) => {
-        inp.addEventListener('input', () => { if (inp.value.length === 1 && i < 5) inputs[i+1].focus(); });
-        inp.addEventListener('keydown', e => { if (e.key === 'Backspace' && !inp.value && i > 0) inputs[i-1].focus(); });
+        inp.addEventListener('input', () => { if (inp.value.length === 1 && i < 5) inputs[i + 1].focus(); });
+        inp.addEventListener('keydown', e => { if (e.key === 'Backspace' && !inp.value && i > 0) inputs[i - 1].focus(); });
     });
     document.getElementById('verifyBtn')?.addEventListener('click', async () => {
         const code = [...inputs].map(i => i.value).join('');
@@ -745,8 +747,8 @@ function initOtp() {
     const timer = setInterval(() => {
         sec--;
         const el = document.getElementById('resendTimer');
-        if (el) el.textContent = `00:${sec.toString().padStart(2,'0')}`;
-        if (sec <= 0) { clearInterval(timer); const btn = document.getElementById('resendBtn'); if(btn) btn.style.color = 'var(--primary)'; }
+        if (el) el.textContent = `00:${sec.toString().padStart(2, '0')}`;
+        if (sec <= 0) { clearInterval(timer); const btn = document.getElementById('resendBtn'); if (btn) btn.style.color = 'var(--primary)'; }
     }, 1000);
     document.getElementById('resendBtn')?.addEventListener('click', async () => {
         try {
@@ -820,7 +822,7 @@ function saveSettings() {
 // ========== IMPORT TRANSACTION FLOW ==========
 
 function escHtml(s) {
-    return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
 function closeImportModal() {
@@ -1072,15 +1074,15 @@ function autoCategorize(desc) {
 
 function getCatMeta(cat) {
     const map = {
-        'Transport':     { catClass:'transport',     icon:'local_taxi' },
-        'Entertainment': { catClass:'entertainment', icon:'movie' },
-        'Food':          { catClass:'food',          icon:'restaurant' },
-        'Groceries':     { catClass:'groceries',     icon:'shopping_cart' },
-        'Housing':       { catClass:'housing',       icon:'home' },
-        'Utilities':     { catClass:'utilities',     icon:'bolt' },
-        'Health':        { catClass:'health',        icon:'favorite' },
-        'Income':        { catClass:'income',        icon:'payments' },
-        'Other':         { catClass:'groceries',     icon:'receipt' },
+        'Transport': { catClass: 'transport', icon: 'local_taxi' },
+        'Entertainment': { catClass: 'entertainment', icon: 'movie' },
+        'Food': { catClass: 'food', icon: 'restaurant' },
+        'Groceries': { catClass: 'groceries', icon: 'shopping_cart' },
+        'Housing': { catClass: 'housing', icon: 'home' },
+        'Utilities': { catClass: 'utilities', icon: 'bolt' },
+        'Health': { catClass: 'health', icon: 'favorite' },
+        'Income': { catClass: 'income', icon: 'payments' },
+        'Other': { catClass: 'groceries', icon: 'receipt' },
     };
     return map[cat] || map['Other'];
 }
@@ -1089,26 +1091,26 @@ function formatImportDate(s) {
     try {
         const d = new Date(s);
         if (!isNaN(d)) {
-            const m = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+            const m = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
             return `${m[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`;
         }
-    } catch(e) {}
+    } catch (e) { }
     return s;
 }
 
 function renderReviewTable(parsed) {
     const modal = document.getElementById('importModal');
     if (!modal) return;
-    const cats = ['Food','Transport','Entertainment','Groceries','Housing','Utilities','Health','Income','Other'];
+    const cats = ['Food', 'Transport', 'Entertainment', 'Groceries', 'Housing', 'Utilities', 'Health', 'Income', 'Other'];
     const rows = parsed.map((tx, i) => `
         <tr id="rr${i}">
             <td><input class="review-input" type="text" value="${escHtml(tx.date)}" placeholder="Date"></td>
             <td><input class="review-input desc-inp" type="text" value="${escHtml(tx.name)}" placeholder="Description"></td>
             <td style="text-align:center">
-                <div style="font-size:10px;font-weight:700;letter-spacing:.5px;margin-bottom:3px;color:${tx.txType==='deposit'?'#10b981':'#ef4444'};background:${tx.txType==='deposit'?'rgba(16,185,129,.12)':'rgba(239,68,68,.12)'};padding:2px 6px;border-radius:20px;display:inline-block">${tx.txType==='deposit'?'DEPOSIT':'WITHDRAWAL'}</div>
-                <input class="review-input amt-inp" type="number" step="0.01" value="${tx.amount.toFixed(2)}" style="color:${tx.txType==='deposit'?'#10b981':'#ef4444'};font-weight:700">
+                <div style="font-size:10px;font-weight:700;letter-spacing:.5px;margin-bottom:3px;color:${tx.txType === 'deposit' ? '#10b981' : '#ef4444'};background:${tx.txType === 'deposit' ? 'rgba(16,185,129,.12)' : 'rgba(239,68,68,.12)'};padding:2px 6px;border-radius:20px;display:inline-block">${tx.txType === 'deposit' ? 'DEPOSIT' : 'WITHDRAWAL'}</div>
+                <input class="review-input amt-inp" type="number" step="0.01" value="${tx.amount.toFixed(2)}" style="color:${tx.txType === 'deposit' ? '#10b981' : '#ef4444'};font-weight:700">
             </td>
-            <td><select class="review-select">${cats.map(c=>`<option value="${c}"${c===tx.cat?' selected':''}>${c}</option>`).join('')}</select></td>
+            <td><select class="review-select">${cats.map(c => `<option value="${c}"${c === tx.cat ? ' selected' : ''}>${c}</option>`).join('')}</select></td>
             <td><input class="review-input" type="text" value="${escHtml(tx.method)}"></td>
             <td><button class="row-del-btn" onclick="removeReviewRow(this)" title="Remove"><span class="material-icons-outlined" style="font-size:16px">delete_outline</span></button></td>
         </tr>`).join('');
@@ -1139,13 +1141,13 @@ function renderReviewTable(parsed) {
 function addReviewRow() {
     const tbody = document.getElementById('reviewTbody');
     if (!tbody) return;
-    const cats = ['Food','Transport','Entertainment','Groceries','Housing','Utilities','Health','Income','Other'];
+    const cats = ['Food', 'Transport', 'Entertainment', 'Groceries', 'Housing', 'Utilities', 'Health', 'Income', 'Other'];
     const tr = document.createElement('tr');
     tr.innerHTML = `
         <td><input class="review-input" type="text" placeholder="MM/DD/YYYY"></td>
         <td><input class="review-input desc-inp" type="text" placeholder="Description"></td>
         <td><input class="review-input amt-inp" type="number" step="0.01" placeholder="0.00"></td>
-        <td><select class="review-select">${cats.map(c=>`<option>${c}</option>`).join('')}</select></td>
+        <td><select class="review-select">${cats.map(c => `<option>${c}</option>`).join('')}</select></td>
         <td><input class="review-input" type="text" value="Manual"></td>
         <td><button class="row-del-btn" onclick="removeReviewRow(this)"><span class="material-icons-outlined" style="font-size:16px">delete_outline</span></button></td>`;
     tbody.appendChild(tr);
@@ -1175,12 +1177,12 @@ async function confirmImport() {
         const cat = sel?.value || 'Other';
         const meta = getCatMeta(cat);
         return {
-            name:     inputs[1]?.value.trim() || 'Transaction',
-            date:     inputs[0]?.value.trim() || new Date().toLocaleDateString(),
-            amount:   parseFloat(inputs[2]?.value) || 0,
+            name: inputs[1]?.value.trim() || 'Transaction',
+            date: inputs[0]?.value.trim() || new Date().toLocaleDateString(),
+            amount: parseFloat(inputs[2]?.value) || 0,
             cat, catClass: meta.catClass, icon: meta.icon,
-            time:     'Imported',
-            method:   inputs[3]?.value.trim() || 'Bank Import',
+            time: 'Imported',
+            method: inputs[3]?.value.trim() || 'Bank Import',
         };
     }).filter(tx => tx.name);
 
@@ -1207,10 +1209,17 @@ async function loadUserTransactions(containerId, limit) {
         const data = await api('transactions', null, 'GET');
         let txs = data.transactions || [];
         if (limit) txs = txs.slice(0, limit);
-        if (txs.length > 0) renderTransactions(containerId, txs);
-        else renderTransactions(containerId, limit ? transactions.slice(0, limit) : transactions);
-    } catch {
-        renderTransactions(containerId, limit ? transactions.slice(0, limit) : transactions);
+        if (txs.length > 0) {
+            renderTransactions(containerId, txs);
+        } else {
+            el.innerHTML = '<li style="text-align:center;padding:32px 16px;color:#9ca3af;font-size:14px;">' +
+                '<span class="material-icons-outlined" style="font-size:48px;display:block;margin-bottom:12px;color:#d1d5db;">receipt_long</span>' +
+                'No transactions yet.<br><span style="font-size:12px;margin-top:4px;display:inline-block;">Add your first transaction or import from a PDF bank statement.</span></li>';
+        }
+    } catch (err) {
+        el.innerHTML = '<li style="text-align:center;padding:24px 16px;color:#ef4444;font-size:13px;">' +
+            '<span class="material-icons-outlined" style="font-size:36px;display:block;margin-bottom:8px;">cloud_off</span>' +
+            'Could not load transactions.<br><span style="font-size:12px;">Please check your connection and try again.</span></li>';
     }
 }
 
