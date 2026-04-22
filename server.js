@@ -41,6 +41,7 @@ app.all('/api/resend-otp',      require('./api/resend-otp'));
 app.all('/api/forgot-password', require('./api/forgot-password'));
 app.all('/api/reset-password',  require('./api/reset-password'));
 app.all('/api/transactions',    require('./api/transactions'));
+app.all('/api/fix-transaction-names', require('./api/fix-transaction-names'));
 
 // ── Health check ──────────────────────────────────────────────
 app.get('/health', (req, res) => res.json({ status: 'ok', app: 'SpendWise API' }));

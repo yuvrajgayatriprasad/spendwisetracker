@@ -975,8 +975,14 @@ function parseTransactionsFromText(text) {
         // --- Detect transaction type & extract clean name from UPI/NEFT ref ---
         let rawDesc = line.replace(dateResult.match[0], '');
         amountMatches.forEach(m => { rawDesc = rawDesc.replace(m[0], ''); });
-        // Strip trailing balance indicator like "Cr" or "Dr" only when preceded by whitespace
+        // Strip trailing Cr/Dr balance indicator
         rawDesc = rawDesc.replace(/\s+(Cr|Dr)\.?\s*$/i, '').replace(/\s+/g, ' ').trim();
+
+        // Strip LEADING serial/cheque numbers (1-6 digit standalone numbers at start)
+        // e.g. "262  UPI/..." or "274  NEFT..."
+        rawDesc = rawDesc.replace(/^\s*\d{1,6}\s+/, '').trim();
+        // Also strip any purely-numeric tokens anywhere that look like Sr.No or Chq.No
+        rawDesc = rawDesc.replace(/\b(\d{1,6})\b(?=\s+[A-Za-z])/g, '').replace(/\s+/g, ' ').trim();
 
         let txType = 'withdrawal'; // default
         let desc = rawDesc;
@@ -986,30 +992,30 @@ function parseTransactionsFromText(text) {
         if (typeMatch) {
             txType = typeMatch[1].toUpperCase() === 'CR' ? 'deposit' : 'withdrawal';
         }
-        // Also detect txType from separate debit/credit columns (two amounts = debit col + balance col)
+        // Also detect txType from separate debit/credit columns
         if (amountMatches.length >= 2) {
-            // If the line has "Cr" suffix it was a credit/deposit
             if (/\bCr\.?\s*$/.test(line)) txType = 'deposit';
             else if (/\bDr\.?\s*$/.test(line)) txType = 'withdrawal';
         }
 
-        // UPI format: UPI/REFNUM/DR/NAME/BANK/... or /CR/NAME/...
+        // UPI format: UPI/REFNUM/DR/NAME/BANK/...
         const upiMatch = rawDesc.match(/\/(?:DR|CR)\/([^\/\s@][^\/]*?)(?:\/|\s*$)/i);
         if (upiMatch) {
-            // Clean name: remove underscores, trailing numbers, email-like strings
             desc = upiMatch[1]
                 .replace(/[_]/g, ' ')
                 .replace(/\d{6,}/g, '')
                 .replace(/[@\.][\w\.]+/g, '')
                 .trim();
         } else {
-            // NEFT/IMPS/RTGS: try to get the sender/receiver name after the ref number
-            // Format: NEFT/IMPS REF12345678 SOME NAME HERE
-            const neftMatch = rawDesc.match(/(?:NEFT|IMPS|RTGS|NACH)[^a-zA-Z]*\d+[^a-zA-Z]*([a-zA-Z][a-zA-Z\s\-&'.]{2,40})/i);
+            // NEFT/IMPS/RTGS: extract the readable name after reference number
+            const neftMatch = rawDesc.match(/(?:NEFT|IMPS|RTGS|NACH)[^a-zA-Z]*\d*[^a-zA-Z]*([A-Za-z][A-Za-z\s\-&'.\/]{2,50})/i);
             if (neftMatch) {
-                desc = neftMatch[1].trim();
+                desc = neftMatch[1]
+                    .replace(/\b\d{5,}\b/g, '')
+                    .replace(/\s+/g, ' ')
+                    .trim();
             } else {
-                // Non-UPI: general cleanup
+                // General cleanup: remove long reference numbers, symbols
                 desc = rawDesc
                     .replace(/\b\d{8,}\b/g, '')   // long ref numbers
                     .replace(/[|*#_]/g, '')
